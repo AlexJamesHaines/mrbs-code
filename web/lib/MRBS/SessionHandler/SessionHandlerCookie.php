@@ -142,8 +142,11 @@ class SessionHandlerCookie implements SessionHandlerInterface, SessionUpdateTime
     assert(!isset($_SESSION['_expiry']), "'_expiry' is a reserved data key");
     assert(!isset($_SESSION['_ip']), "'_ip' is a reserved data key");
     // Set the expiry to be the same as the session cookie expiry, or else 0 for browser close
-    $lifetime = session_get_cookie_params()['lifetime'];
-    $expiry = ($lifetime > 0) ? time() + $lifetime : 0;
+    $expiry = self::getExpiry();
+    if ($expiry === false)
+    {
+      throw new \Exception('Session expiry time not set');
+    }
     $_SESSION['_expiry'] = $expiry;
     if ($this->include_ip)
     {
@@ -215,8 +218,7 @@ class SessionHandlerCookie implements SessionHandlerInterface, SessionUpdateTime
   public static function updateExpiry(string $id, int $expiry) : void
   {
     $old_id = self::getId();
-    $old_expiry = self::getExpiry();
-    if ($old_id === false)
+    if (($old_id === false) || ($old_id !== $id))
     {
       self::setId($id);
       self::setExpiry($expiry);
