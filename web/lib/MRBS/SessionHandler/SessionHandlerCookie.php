@@ -225,28 +225,41 @@ class SessionHandlerCookie implements SessionHandlerInterface, SessionUpdateTime
 
 
   /**
-   * Gets the session expiry time from the database.
+   * Get the session expiry time from the database.
    *
    * @return false|int Returns the session expiry time in seconds, or FALSE if the session expiry time is not set.
    */
   private static function getExpiry()
   {
-    $sql = "SELECT variable_content
-              FROM " . _tbl('variables') . "
-             WHERE variable_name='session_expiry'
-             LIMIT 1";
-    $result = db()->query_scalar_non_bool($sql);
+    $result = self::getVariable('session_expiry');
     return ($result === false) ? false : intval($result);
   }
 
 
+  /**
+   *  Get the session ID from the database.
+   *
+   * @return false|string Returns the session ID, or FALSE if the session ID is not set.
+   */
   private static function getId()
   {
+    return self::getVariable('session_id');
+  }
+
+
+  /**
+   * Get a variable from the variables table.
+   *
+   * @return false|string Returns the variable value, or FALSE if the variable is not set.
+   */
+  private static function getVariable(string $name)
+  {
+    $sql_params = [':variable_name' => $name];
     $sql = "SELECT variable_content
               FROM " . _tbl('variables') . "
-             WHERE variable_name='session_id'
+             WHERE variable_name=:variable_name
              LIMIT 1";
-    return db()->query_scalar_non_bool($sql);
+    return db()->query_scalar_non_bool($sql, $sql_params);
   }
 
 
