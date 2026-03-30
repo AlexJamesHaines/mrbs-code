@@ -63,7 +63,8 @@ function get_compression_wrappers() : array
  *
  * @param string $import_creator If set to IMPORT_CREATOR_USERNAME, then the X-MRBS-USERNAME is used.  If that
  * parameter doesn't exist, or if `$import_creator` is set to IMPORT_CREATOR_EMAIL, then MRBS will try to get the
- * username from the email address.  If that fails, then the email address is returned.
+ * username from the email address.  If that fails, then the current user's username is used, and failing that the
+ * email address in the property.
  */
 function get_create_by(Property $organizer, string $import_creator) : string
 {
@@ -83,8 +84,15 @@ function get_create_by(Property $organizer, string $import_creator) : string
       // Get the email address.   Stripping off the 'mailto' is a very simplistic
       // method.  It will work in the majority of cases, but this needs to be improved
       $email = preg_replace('/^mailto:/', '', $organizer->getValues()[0]);
-      $result = auth()->getUsernameByEmail($email);
-      return $result ?? $email;
+      if (null === ($result = auth()->getUsernameByEmail($email)))
+      {
+        // If we didn't manage to work out a username, then just put the booking under the name of the current user.
+        // And if we haven't got a current user, then just use the email address.
+        // TODO: offer an option of choosing a default user?
+        $mrbs_user = session()->getCurrentUser();
+        $result = (isset($mrbs_user)) ? $mrbs_user->username : $email;
+      }
+      return $result;
       break;
 
     default:
@@ -564,17 +572,7 @@ function process_event(Event $event) : bool
     return false;
   }
 
-  // If we didn't manage to work out a username, then just put the booking
-  // under the name of the current user
-  if (!isset($booking['create_by']))
-  {
-    $mrbs_user = session()->getCurrentUser();
-    $mrbs_username = (isset($mrbs_user)) ? $mrbs_user->username : null;
-    $booking['create_by'] = $mrbs_username;
-  }
-
-  // On the other hand, a UID is mandatory in RFC 5545.   We'll be lenient and
-  // provide one if it is missing
+  // A UID is mandatory in RFC 5545.   We'll be lenient and provide one if it is missing
   if (!isset($booking['ical_uid']))
   {
     $booking['ical_uid'] = generate_global_uid($booking['name']);
