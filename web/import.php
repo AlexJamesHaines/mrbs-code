@@ -65,8 +65,8 @@ function get_compression_wrappers() : array
  * Get a username from the ORGANIZER property.
  *
  * @param string $import_creator If set to IMPORT_CREATOR_USERNAME, then the X-MRBS-USERNAME is used.  If that
- * parameter doesn't exist, or if set to IMPORT_CREATOR_EMAIL, then MRBS will try to get the username from the
- * email address.  If that fails, then the email address is returned..
+ * parameter doesn't exist, or if `$import_creator` is set to IMPORT_CREATOR_EMAIL, then MRBS will try to get the
+ * username from the email address.  If that fails, then the email address is returned.
  */
 function get_create_by(Property $organizer, string $import_creator) : string
 {
@@ -1059,11 +1059,15 @@ function get_fieldset_other_settings() : ElementFieldset
   $fieldset->addLegend(get_vocab('other_settings'));
 
   // Creator
+  // The default is to derive the creator from the organizer's MRBS username, because if that isn't present it
+  // will be derived automatically from the organizer's email address.  It's useful to have the option of using
+  // the email address because there may be occasions when the iCalendar file is being imported into a system that
+  // has a different set of usernames to the one that it was exported from.
   $options = [
-    IMPORT_CREATOR_EMAIL => get_vocab('organizer_email_address'),
     IMPORT_CREATOR_USERNAME => get_vocab('organizer_mrbs_username'),
+    IMPORT_CREATOR_EMAIL => get_vocab('organizer_email_address')
   ];
-  $value = IMPORT_CREATOR_EMAIL;
+  $value = IMPORT_CREATOR_USERNAME;
   $field = new FieldInputRadioGroup();
   $field->setControlAttribute('id', 'import_creator')
         ->setLabel(get_vocab('derive_creator_from'))
@@ -1139,7 +1143,7 @@ $add_location = get_form_var('add_location', 'array');
 $area_room_order = get_form_var('area_room_order', 'string', 'area_room');
 $area_room_delimiter = get_form_var('area_room_delimiter', 'string', $default_area_room_delimiter);
 $area_room_create = get_form_var('area_room_create', 'string', '0');
-$import_creator = get_form_var('import_creator', 'string', IMPORT_CREATOR_EMAIL);
+$import_creator = get_form_var('import_creator', 'string', IMPORT_CREATOR_USERNAME);
 $import_default_type = get_form_var('import_default_type', 'string', $default_type);
 $import_past = get_form_var('import_past', 'string', ((empty($default_import_past)) ? '0' : '1'));
 $skip = get_form_var('skip', 'bool', empty($skip_default));
