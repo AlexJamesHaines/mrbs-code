@@ -25,10 +25,15 @@ else
 
 /**
  * A custom session handler that stores session data in a cookie.
+ *
+ * Ideally we would encrypt the session data, but most encryption algorithms will increase the length of
+ * the string.  As we will be putting the data in a cookie, whose size is limited to 4096 bytes, there
+ * would be a real danger of the cookie becoming too large.  Even unencrypted, it's quite possible that the
+ * session data could be too large for a cookie.  The cookie-based session handler is therefore not really
+ * recommended.
  */
 class SessionHandlerCookie implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
 {
-
   private const DEFAULT_HASH_ALGO = 'sha512';
 
   private $algo;
