@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace MRBS\SessionHandler;
 
+use MRBS\Utf8\Utf8String;
+
 class Cookie
 {
 
@@ -17,7 +19,7 @@ class Cookie
     if (version_compare(PHP_VERSION, '7.3.0', '>='))
     {
       // The new way, allowing 'samesite' to be set
-      return setcookie($name, $value, [
+      $result = setcookie($name, $value, [
         'expires' => $expires,
         'path' => $cookie_params['path'],
         'domain' => $cookie_params['domain'],
@@ -26,23 +28,46 @@ class Cookie
         'samesite' => $cookie_params['samesite']
       ]);
     }
+    else
+    {
+      // The old way.  'samesite' wasn't available until PHP 7.3.0.
+      $result = setcookie(
+        $name,
+        $value,
+        $expires,
+        $cookie_params['path'],
+        $cookie_params['domain'],
+        $cookie_params['secure'],
+        $cookie_params['httponly']
+      );
+    }
 
-    // The old way.  'samesite' wasn't available until PHP 7.3.0.
-    return setcookie(
-      $name,
-      $value,
-      $expires,
-      $cookie_params['path'],
-      $cookie_params['domain'],
-      $cookie_params['secure'],
-      $cookie_params['httponly']
-    );
+    self::checkCookieSizes();
+    return $result;
   }
 
 
   public static function delete(string $name) : bool
   {
     return self::set($name, '', time() - 42000);
+  }
+
+
+  private static function checkCookieSizes() : void
+  {
+    $max_size = 4096;
+    $headers = headers_list();
+
+    foreach ($headers as $header)
+    {
+      if (preg_match('/^Set-Cookie:\s*(.*$)/', $header, $matches))
+      {
+        if ((string)(new Utf8String($matches[1]))->byteCount() > $max_size)
+        {
+          trigger_error("Cookie exceeds $max_size bytes", E_USER_WARNING);
+        }
+      }
+    }
   }
 
 }
