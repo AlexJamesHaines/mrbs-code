@@ -251,8 +251,8 @@ would define the 'conference_facilities' custom field to be mandatory.
 In the case of a select field, this adds an empty value to the dropdown
 list.
 
-If you want the field to be mandatory only for specific areas, you can instead
-set the value to an array of area IDs. For example:
+For the entry table only, you can also specify that the field should be mandatory
+only for specific areas, by setting the value to an array of area IDs. For example:
 
 $is_mandatory_field['entry.conference_facilities'] = [1, 3];
 
